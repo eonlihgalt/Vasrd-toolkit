@@ -42,6 +42,12 @@ Agent operating principles:
 - Keep this document updated after milestones or major decisions.
 - Do not treat the repo as complete until validation, packaging, and build checks are passing.
 
+Required update policy:
+- Every agent must update both AGENTS.md and AGENT_CHANGELOG.md for each significant work item.
+- If you change project status, fix a blocker, add a dependency, or complete a milestone, record it in both documents.
+- Keep entries brief, dated, and specific.
+- A future agent should be able to understand what changed, why it changed, and what area may need troubleshooting.
+
 Priority roadmap
 
 P0 — Must have before release-quality MVP
@@ -206,6 +212,7 @@ Update policy for this document
 
 Update log
 - Initial creation: 2026-10-20
+- Dependency foundation added: 2026-10-20
 - Status: project is an active prototype with targeted MVP completion plan
 
 Suggested next actions for the next agent
