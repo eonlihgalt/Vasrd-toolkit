@@ -9,14 +9,24 @@ Required update policy:
 - If a task is not fully complete, record the partial state and next blocker.
 
 ## 2026-10-20
-- Added AGENTS.md as the canonical repo plan and operational guide.
-- Started project stabilization by creating dependency files for a clean Python setup.
-- Added explicit requirement that future agents update both repo planning documents whenever work changes the project state.
-- Current state: repo is still a working prototype, but it is now more reproducible and better documented for the next agent pass.
+- Updated AGENTS.md to reflect the current stabilization work and the explicit agent update policy.
+- Added compatibility fixes to the package and startup path so the app can be launched more predictably from the repo root.
+- Fixed several syntax and regex issues in the GUI and scraper that were blocking a clean import/startup flow.
+- Files updated:
+  - AGENTS.md
+  - AGENT_CHANGELOG.md
+  - vasrd_toolkit_package/main.py
+  - vasrd_toolkit_package/vasrd_gui.py
+  - vasrd_toolkit_package/vasrd_scraper.py
+  - main.py
+  - vasrd_gui.py
+  - vasrd_scraper.py
+  - vasrd_schema.py
+  - vasrd_toolkit_package/__init__.py
+- Status: startup/import path blockers identified and partially addressed; full runtime validation remains the next required step.
 
 ## 2026-10-20 - Dependency foundation
-- Added requirements.txt with runtime dependencies needed for the VASRD scraper and GUI.
-- Added requirements-dev.txt with local developer tooling and packaging dependencies.
+- Added runtime and developer requirements files to support reproducible installs.
 - Files added:
   - requirements.txt
   - requirements-dev.txt

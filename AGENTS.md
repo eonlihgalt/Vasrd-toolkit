@@ -29,8 +29,8 @@ Project assessment:
   - A Tkinter GUI exists for import/search/export functionality.
   - The repo includes a README and setup direction.
 - Gaps:
-  - Dependency management is not fully defined in the repo.
-  - Build/test validation is absent.
+  - Dependency management is not yet fully defined in the repo.
+  - Build/test validation is still absent.
   - Error handling and data quality validation are limited.
   - Packaging/distribution is incomplete.
   - The project is not yet robust enough for a production release.
@@ -150,7 +150,7 @@ Risk register
    - Mitigation: add idempotent import checks, integrity verification, and tests.
 
 3. Environment reproducibility risk
-   - The project may not be installable from a fresh environment without additional setup files.
+   - The repo may not be installable from a fresh environment without additional setup files.
    - Risk: future agents cannot reliably reproduce the build.
    - Mitigation: create and validate complete requirements files and install docs.
 
@@ -213,7 +213,8 @@ Update policy for this document
 Update log
 - Initial creation: 2026-10-20
 - Dependency foundation added: 2026-10-20
-- Status: project is an active prototype with targeted MVP completion plan
+- Import-path compatibility and syntax cleanup pass: 2026-10-20
+- Status: project prototype is being stabilized for clean startup and reliable import flow
 
 Suggested next actions for the next agent
 - Confirm dependency files and install flow.

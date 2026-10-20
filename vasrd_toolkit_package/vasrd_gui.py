@@ -1,5 +1,5 @@
-"""
-vasrd_gui.py — Clean Tkinter GUI for the VASRD Toolkit.
+"""vasrd_gui.py - Clean Tkinter GUI for the VASRD Toolkit.
+
 - Create schema, import from eCFR
 - Search and view details
 - CSV export
@@ -8,15 +8,15 @@ vasrd_gui.py — Clean Tkinter GUI for the VASRD Toolkit.
 """
 
 import csv
+import sqlite3
 import threading
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
 from datetime import datetime
 from pathlib import Path
-import sqlite3
+from tkinter import filedialog, messagebox, ttk
 
-from vasrd_schema import create_schema
-from vasrd_scraper import VASRDScraper
+from .vasrd_schema import create_schema
+from .vasrd_scraper import VASRDScraper
 
 
 def run_gui():
@@ -40,7 +40,6 @@ class VASRDGUI:
         self._open_db(self.db_path)
         self._poll_logs()
 
-    # ---- UI ----
     def _build_ui(self):
         top = ttk.Frame(self.master, padding=8)
         top.pack(fill="x")
@@ -83,7 +82,6 @@ class VASRDGUI:
         self.log = tk.Text(logf, height=8, wrap="word", state="disabled")
         self.log.pack(fill="both", expand=True)
 
-    # ---- DB ops ----
     def _open_db(self, path: Path):
         if self.conn:
             self.conn.close()
@@ -93,40 +91,45 @@ class VASRDGUI:
         self.db_label_var.set(str(path))
 
     def _choose_db(self):
-        p = filedialog.askopenfilename(title="Select database", filetypes=[("SQLite DB", "*.db"), ("All files", "*.*")])
-        if p:
-            self._open_db(Path(p))
+        path = filedialog.askopenfilename(
+            title="Select database",
+            filetypes=[("SQLite DB", "*.db"), ("All files", "*.*")],
+        )
+        if path:
+            self._open_db(Path(path))
 
     def _new_db(self):
-        p = filedialog.asksaveasfilename(title="Create new database", defaultextension=".db")
-        if not p:
+        path = filedialog.asksaveasfilename(
+            title="Create new database",
+            defaultextension=".db",
+        )
+        if not path:
             return
-        self._open_db(Path(p))
+        self._open_db(Path(path))
         create_schema(self.conn)
-        messagebox.showinfo("Created", f"New database created:
-{p}")
+        messagebox.showinfo("Created", f"New database created:\n{path}")
 
     def _backup(self):
         import shutil
+
         self.conn.commit()
         dst = self.db_path.with_suffix(".backup.db")
         shutil.copy2(self.db_path, dst)
-        messagebox.showinfo("Backup", f"Backup saved:
-{dst}")
+        messagebox.showinfo("Backup", f"Backup saved:\n{dst}")
 
     def _integrity(self):
-        res = self.conn.execute("PRAGMA integrity_check;").fetchone()[0]
-        messagebox.showinfo("Integrity", res)
+        result = self.conn.execute("PRAGMA integrity_check;").fetchone()[0]
+        messagebox.showinfo("Integrity", result)
 
     def _create_schema(self):
         create_schema(self.conn)
         messagebox.showinfo("Schema", "Schema created/verified.")
 
-    # ---- Search & CSV ----
     def _search(self):
         term = self.search_var.get().strip()
         if not term:
             return
+
         cur = self.conn.cursor()
         rows = cur.execute(
             """
@@ -143,31 +146,35 @@ class VASRDGUI:
 
         for i in self.tree.get_children():
             self.tree.delete(i)
-        for r in rows:
-            self.tree.insert("", "end", values=r)
+        for row in rows:
+            self.tree.insert("", "end", values=row)
 
     def _export_csv(self):
-        path = filedialog.asksaveasfilename(title="Save CSV", defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+        path = filedialog.asksaveasfilename(
+            title="Save CSV",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+        )
         if not path:
             return
+
         rows = [self.tree.item(i, "values") for i in self.tree.get_children()]
         if not rows:
             messagebox.showinfo("No Data", "No rows to export.")
             return
-        with open(path, "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["DC Code", "Name", "Body System", "CFR Section", "DC ID"])
-            for r in rows:
-                w.writerow(r)
-        messagebox.showinfo("Export Complete", f"Saved to:
-{path}")
 
-    # ---- Details ----
-    def _open_details(self, _evt):
-        sel = self.tree.focus()
-        if not sel:
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["DC Code", "Name", "Body System", "CFR Section", "DC ID"])
+            writer.writerows(rows)
+
+        messagebox.showinfo("Export Complete", f"Saved to:\n{path}")
+
+    def _open_details(self, _event):
+        selection = self.tree.focus()
+        if not selection:
             return
-        dc, name, bs, sec, dc_id = self.tree.item(sel, "values")
+        dc, name, body_system, section, dc_id = self.tree.item(selection, "values")
 
         cur = self.conn.cursor()
         ratings = cur.execute(
@@ -190,37 +197,25 @@ class VASRDGUI:
             (dc_id,),
         ).fetchall()
 
-        w = tk.Toplevel(self.master)
-        w.title(f"Diagnostic Code {dc}")
-        w.geometry("860x600")
+        window = tk.Toplevel(self.master)
+        window.title(f"Diagnostic Code {dc}")
+        window.geometry("860x600")
 
-        t = tk.Text(w, wrap="word")
-        t.pack(fill="both", expand=True)
-        t.insert("end", f"DC: {dc}
-Name: {name}
-Body System: {bs}
-Section: {sec}
-
-")
-        t.insert("end", "=== Rating Criteria ===
-")
+        text_widget = tk.Text(window, wrap="word")
+        text_widget.pack(fill="both", expand=True)
+        text_widget.insert("end", f"DC: {dc}\nName: {name}\nBody System: {body_system}\nSection: {section}\n\n")
+        text_widget.insert("end", "=== Rating Criteria ===\n")
         for pct, txt in ratings:
-            t.insert("end", f"[{pct}%] {txt}
-")
-        t.insert("end", "
-=== Notes ===
-")
+            text_widget.insert("end", f"[{pct}%] {txt}\n")
+        text_widget.insert("end", "\n=== Notes ===\n")
         if notes:
             for num, txt in notes:
                 label = f"Note {num}" if num else "Note"
-                t.insert("end", f"{label}: {txt}
-")
+                text_widget.insert("end", f"{label}: {txt}\n")
         else:
-            t.insert("end", "No notes recorded.
-")
-        t.config(state="disabled")
+            text_widget.insert("end", "No notes recorded.\n")
+        text_widget.config(state="disabled")
 
-    # ---- Dark mode ----
     def _toggle_dark(self):
         self.dark = not self.dark
         if self.dark:
@@ -235,7 +230,6 @@ Section: {sec}
             self.master.configure(background=None)
             self.log.configure(background="white", foreground="black")
 
-    # ---- Threaded tasks & logging ----
     def _import(self):
         self._run_task(self._do_import)
 
@@ -244,18 +238,19 @@ Section: {sec}
 
     def _run_task(self, fn):
         def worker():
-            err = None
+            error = None
             try:
                 fn()
-            except Exception as e:
-                err = e
-                self._log(f"ERROR: {e}")
-            self.master.after(0, self._task_done, err)
+            except Exception as exc:  # pragma: no cover - UI path only
+                error = exc
+                self._log(f"ERROR: {exc}")
+            self.master.after(0, self._task_done, error)
+
         threading.Thread(target=worker, daemon=True).start()
 
-    def _task_done(self, err):
-        if err:
-            messagebox.showerror("Task failed", str(err))
+    def _task_done(self, error):
+        if error:
+            messagebox.showerror("Task failed", str(error))
         else:
             messagebox.showinfo("Done", f"Database: {self.db_path}")
 
@@ -263,40 +258,43 @@ Section: {sec}
         if self.conn:
             self.conn.close()
             self.conn = None
-        date = self.date_var.get().strip() or datetime.utcnow().strftime("%Y-%m-%d")
-        self._log(f"Importing from eCFR (date={date}) …")
-        s = VASRDScraper(self.db_path, logger=self._log)
+
+        date_value = self.date_var.get().strip() or datetime.utcnow().strftime("%Y-%m-%d")
+        self._log(f"Importing from eCFR (date={date_value}) ...")
+        scraper = VASRDScraper(self.db_path, logger=self._log)
         try:
-            count = s.import_vasrd(date)
+            count = scraper.import_vasrd(date_value)
             self._log(f"Import complete. Ratings added: {count}")
         finally:
-            s.close()
+            scraper.close()
         self._open_db(self.db_path)
 
     def _do_reset(self):
         import shutil
-        self._log("Reset: backing up and recreating schema …")
+
+        self._log("Reset: backing up and recreating schema ...")
         if self.conn:
             self.conn.close()
             self.conn = None
+
         backup = self.db_path.with_suffix(".reset_backup.db")
         if self.db_path.exists():
             shutil.copy2(self.db_path, backup)
             self._log(f"Backup: {backup}")
             self.db_path.unlink()
+
         self._open_db(self.db_path)
         create_schema(self.conn)
         self._do_import()
 
-    def _log(self, msg: str):
-        self.log_buffer.append(msg)
+    def _log(self, message: str):
+        self.log_buffer.append(message)
 
     def _poll_logs(self):
         if self.log_buffer:
             self.log.config(state="normal")
-            for m in self.log_buffer:
-                self.log.insert("end", m + "
-")
+            for item in self.log_buffer:
+                self.log.insert("end", item + "\n")
             self.log.see("end")
             self.log.config(state="disabled")
             self.log_buffer.clear()
